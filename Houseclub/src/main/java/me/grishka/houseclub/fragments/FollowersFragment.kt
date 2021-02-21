@@ -13,10 +13,10 @@ class FollowersFragment : UserListFragment() {
 
     override fun doLoadData(offset: Int, count: Int) {
         currentRequest = GetFollowers(arguments.getInt("id"), 50, offset / 50)
-            .setCallback(object : SimpleCallback<GetFollowers.Response?>(this) {
-                override fun onSuccess(result: GetFollowers.Response?) {
+            .setCallback(object : SimpleCallback<GetFollowers.Response>(this) {
+                override fun onSuccess(result: GetFollowers.Response) {
                     currentRequest = null
-                    onDataLoaded(result!!.users, data.size + preloadedData.size + result.users!!.size < result.count)
+                    onDataLoaded(result.users, data.size + preloadedData.size + result.users!!.size < result.count)
                 }
             })
             .exec()

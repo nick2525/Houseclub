@@ -50,20 +50,20 @@ class InChannelFragment : BaseRecyclerFragment<ChannelUser?>(10), ChannelEventLi
     private var muteBtn: ImageButton? = null
     private var raiseBtn: Button? = null
     private var channel: Channel? = null
-    private val speakers = ArrayList<ChannelUser?>()
-    private val followedBySpeakers = ArrayList<ChannelUser?>()
-    private val otherUsers = ArrayList<ChannelUser?>()
-    private val mutedUsers = ArrayList<Int>()
-    private val speakingUsers = ArrayList<Int>()
+    private val speakers = mutableListOf<ChannelUser>()
+    private val followedBySpeakers = mutableListOf<ChannelUser>()
+    private val otherUsers = mutableListOf<ChannelUser>()
+    private val mutedUsers = mutableListOf<Int>()
+    private val speakingUsers = mutableListOf<Int>()
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<View>(R.id.leave).setOnClickListener { v: View -> onLeaveClick(v) }
+        view.findViewById<View>(R.id.leave).setOnClickListener { onLeaveClick(it) }
         raiseBtn = view.findViewById(R.id.raise)
         muteBtn = view.findViewById(R.id.mute)
-        raiseBtn?.setOnClickListener(View.OnClickListener { v: View -> onRaiseClick(v) })
-        muteBtn?.setOnClickListener(View.OnClickListener { v: View -> onMuteClick(v) })
+        raiseBtn?.setOnClickListener{ onRaiseClick(it) }
+        muteBtn?.setOnClickListener{ onMuteClick(it) }
         val lm = GridLayoutManager(activity, 12)
         lm.spanSizeLookup = object : SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int {
@@ -130,7 +130,7 @@ class InChannelFragment : BaseRecyclerFragment<ChannelUser?>(10), ChannelEventLi
     }
 
     private fun onLeaveClick(v: View) {
-        instance!!.leaveChannel()
+        instance?.leaveChannel()
         Nav.finish(this)
     }
 
@@ -154,7 +154,7 @@ class InChannelFragment : BaseRecyclerFragment<ChannelUser?>(10), ChannelEventLi
             mutedUsers.remove(id)
         }
         for (user in speakers) {
-            if (user!!.userId == id) {
+            if (user.userId == id) {
                 user.isMuted = muted
                 val h = list.findViewHolderForAdapterPosition(i)
                 if (h is UserViewHolder) {
@@ -181,7 +181,7 @@ class InChannelFragment : BaseRecyclerFragment<ChannelUser?>(10), ChannelEventLi
     override fun onUserLeft(id: Int) {
         var i = 0
         for (user in speakers) {
-            if (user!!.userId == id) {
+            if (user.userId == id) {
                 speakers.remove(user)
                 speakersAdapter!!.notifyItemRemoved(i)
                 return
@@ -190,7 +190,7 @@ class InChannelFragment : BaseRecyclerFragment<ChannelUser?>(10), ChannelEventLi
         }
         i = 0
         for (user in followedBySpeakers) {
-            if (user!!.userId == id) {
+            if (user.userId == id) {
                 followedBySpeakers.remove(user)
                 followedAdapter!!.notifyItemRemoved(i)
                 return
@@ -199,7 +199,7 @@ class InChannelFragment : BaseRecyclerFragment<ChannelUser?>(10), ChannelEventLi
         }
         i = 0
         for (user in otherUsers) {
-            if (user!!.userId == id) {
+            if (user.userId == id) {
                 otherUsers.remove(user)
                 othersAdapter!!.notifyItemRemoved(i)
                 return

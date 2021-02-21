@@ -9,7 +9,6 @@ import me.grishka.houseclub.R
 import okhttp3.Call
 import java.io.File
 import java.lang.reflect.Type
-import java.util.HashMap
 
 abstract class ClubhouseAPIRequest<T>(var method: String, var path: String, var responseClass: Type) : APIRequest<T>() {
     var queryParams = mutableMapOf<String, String>()
@@ -27,7 +26,7 @@ abstract class ClubhouseAPIRequest<T>(var method: String, var path: String, var 
     }
 
     override fun exec(): APIRequest<T> {
-        ClubhouseAPIController.instance!!.execRequest(this)
+        ClubhouseAPIController.instance.execRequest(this)
         if (progress != null) progress!!.show()
         return this
     }
@@ -46,14 +45,15 @@ abstract class ClubhouseAPIRequest<T>(var method: String, var path: String, var 
     }
 
     fun wrapProgress(context: Context): ClubhouseAPIRequest<T> {
-        progress = ProgressDialog(context)
-        progress!!.setMessage(context.getString(R.string.loading))
-        progress!!.setCancelable(false)
+        progress = ProgressDialog(context).apply {
+            setMessage(context.getString(R.string.loading))
+            setCancelable(false)
+        }
         return this
     }
 
     private fun dismissProgressDialog() {
-        progress!!.dismiss()
+        progress?.dismiss()
         progress = null
     }
 

@@ -6,10 +6,10 @@ import java.util.HashMap
 
 class GetFollowing(userID: Int, pageSize: Int, page: Int) :
     ClubhouseAPIRequest<GetFollowing.Response?>("GET", "get_following", Response::class.java) {
-    class Response {
-        var users: List<FullUser>? = null
-        var count = 0
-    }
+    class Response(
+        var users: List<FullUser>? = null,
+        var count: Int = 0
+    )
 
     init {
         queryParams["user_id"] = userID.toString()

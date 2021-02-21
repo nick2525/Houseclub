@@ -34,7 +34,7 @@ class UpdatePhoto(private val uri: Uri) :
         }
         Canvas(resizedBitmap).drawBitmap(orig, srcRect, Rect(0, 0, size, size), Paint(Paint.FILTER_BITMAP_FLAG))
         val tmp = File(App.applicationContext.cacheDir, "ava_tmp.jpg")
-        FileOutputStream(tmp).use { out -> resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) }
+        FileOutputStream(tmp).use { resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 95, it) }
         fileToUpload = tmp
         fileFieldName = "file"
         fileMimeType = "image/jpeg"

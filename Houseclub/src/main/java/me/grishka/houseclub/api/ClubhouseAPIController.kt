@@ -74,17 +74,17 @@ class ClubhouseAPIController private constructor() {
                 } else {
                     bldr.method(req.method, reqBody)
                 }
-                val locales = App.applicationContext!!.resources.configuration.locales
+                val locales = App.applicationContext.resources.configuration.locales
                 bldr.header("CH-Languages", locales.toLanguageTags())
                     .header("CH-Locale", locales[0].toLanguageTag().replace('-', '_'))
                     .header("Accept", "application/json")
                     .header("CH-AppBuild", API_BUILD_ID)
                     .header("CH-AppVersion", API_BUILD_VERSION)
                     .header("User-Agent", API_UA)
-                    .header("CH-DeviceId", deviceID)
+                    .header("CH-DeviceId", deviceID.orEmpty())
                 if (isLoggedIn) {
                     bldr.header("Authorization", "Token " + userToken)
-                        .header("CH-UserID", userID)
+                        .header("CH-UserID", userID.orEmpty())
                 }
                 val call = httpClient.newCall(bldr.build())
                 if (DEBUG) Log.i(TAG, call.request().headers().toString())
