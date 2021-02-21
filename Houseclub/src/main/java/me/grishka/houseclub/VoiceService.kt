@@ -81,7 +81,7 @@ class VoiceService : Service() {
             stopSelf()
             return
         }
-        engine?.setChannelProfile(Constants.CHANNEL_PROFILE_COMMUNICATION)
+        engine?.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING)
         engine?.setDefaultAudioRoutetoSpeakerphone(true)
         engine?.enableAudioVolumeIndication(500, 3, false)
         engine?.muteLocalAudioStream(true)
