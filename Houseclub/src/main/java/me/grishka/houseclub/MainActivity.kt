@@ -6,13 +6,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import me.grishka.appkit.FragmentStackActivity
 import me.grishka.appkit.api.Callback
 import me.grishka.appkit.api.ErrorResponse
-import me.grishka.houseclub.MainActivity
 import me.grishka.houseclub.api.ClubhouseSession
 import me.grishka.houseclub.api.methods.CheckWaitlistStatus
 import me.grishka.houseclub.api.methods.GetChannel
+import me.grishka.houseclub.api.methods.GetEvent
 import me.grishka.houseclub.api.methods.JoinChannel
 import me.grishka.houseclub.api.model.Channel
 import me.grishka.houseclub.fragments.HomeFragment
@@ -20,6 +21,7 @@ import me.grishka.houseclub.fragments.InChannelFragment
 import me.grishka.houseclub.fragments.LoginFragment
 import me.grishka.houseclub.fragments.RegisterFragment
 import me.grishka.houseclub.fragments.WaitlistedFragment
+import java.util.Date
 
 class MainActivity : FragmentStackActivity() {
     private var channelToJoin: Channel? = null
@@ -84,16 +86,48 @@ class MainActivity : FragmentStackActivity() {
 
     private fun joinChannelFromIntent() {
         val data = intent.data
-        val id = data?.lastPathSegment.orEmpty()
+        val path = data?.pathSegments.orEmpty()
+        val id = path[path.size - 1]
+        if (path.first() == "room") {
+            joinChannelById(id)
+        } else if (path[0] == "event") {
+            GetEvent(id)
+                .wrapProgress(this)
+                .setCallback(object : Callback<GetEvent.Response> {
+                    override fun onSuccess(result: GetEvent.Response) {
+                        if (result.event?.channel != null) {
+                            joinChannelById(result.event?.channel.orEmpty())
+                        } else {
+                            if (result.event?.isExpired == true) Toast.makeText(
+                                this@MainActivity,
+                                R.string.event_expired,
+                                Toast.LENGTH_SHORT
+                            ).show() else if (result.event!!.timeStart!!.after(Date())) Toast.makeText(
+                                this@MainActivity,
+                                R.string.event_not_started,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                    override fun onError(error: ErrorResponse) {
+                        error.showToast(this@MainActivity)
+                    }
+                })
+                .exec()
+        }
+    }
+
+    private fun joinChannelById(id: String){
         GetChannel(id)
             .wrapProgress(this)
             .setCallback(object : Callback<Channel> {
                 override fun onSuccess(result: Channel) {
                     AlertDialog.Builder(this@MainActivity)
-                        .setTitle(R.string.join_this_room)
+                        .setTitle(me.grishka.houseclub.R.string.join_this_room)
                         .setMessage(result.topic)
-                        .setPositiveButton(R.string.join) { _, _ -> joinChannel(result) }
-                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(me.grishka.houseclub.R.string.join) { _, _ -> joinChannel(result) }
+                        .setNegativeButton(me.grishka.houseclub.R.string.cancel, null)
                         .show()
                 }
 
@@ -123,7 +157,8 @@ class MainActivity : FragmentStackActivity() {
                 .setCallback(object : Callback<Channel?> {
                     override fun onSuccess(result: Channel?) {
                         val intent = Intent(this@MainActivity, VoiceService::class.java)
-                        intent.putExtra("channel", result)
+                        intent.putExtra("channel", result?.channel)
+                        DataProvider.saveChannel(result)
                         if (Build.VERSION.SDK_INT >= 26) startForegroundService(intent) else startService(intent)
                         val extras = Bundle()
                         extras.putBoolean("_can_go_back", true)

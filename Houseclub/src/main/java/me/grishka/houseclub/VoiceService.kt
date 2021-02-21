@@ -90,12 +90,14 @@ class VoiceService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        RtcEngine.destroy()
         instance = null
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         if (engine != null) {
-            channel = intent.getParcelableExtra("channel")
+            val id = intent.getStringExtra("channel")
+            channel = DataProvider.getChannel(id)
             updateChannel(channel)
             val nm = getSystemService(NotificationManager::class.java)
             val n = Notification.Builder(this)
@@ -127,7 +129,9 @@ class VoiceService : Service() {
     }
 
     private fun doJoinChannel() {
-        engine!!.joinChannel(channel!!.token, channel!!.channel, "", ClubhouseSession.userID!!.toInt())
+        val channelProfile = if(isSelfSpeaker) Constants.CHANNEL_PROFILE_COMMUNICATION else Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
+        engine?.setChannelProfile(channelProfile)
+        engine?.joinChannel(channel?.token, channel?.channel, "", ClubhouseSession.userID?.toInt()?:0)
         uiHandler.postDelayed(pinger, 30000)
         for (l in listeners) l.onChannelUpdated(channel)
         val pnConf = PNConfiguration()
@@ -136,8 +140,8 @@ class VoiceService : Service() {
         //pnConf.setUuid(UUID.randomUUID().toString());
         pnConf.origin = "clubhouse.pubnub.com"
         pnConf.uuid = ClubhouseSession.userID
-        pnConf.setPresenceTimeoutWithCustomInterval(channel!!.pubnubHeartbeatValue, channel!!.pubnubHeartbeatInterval)
-        pnConf.authKey = channel!!.pubnubToken
+        pnConf.setPresenceTimeoutWithCustomInterval(channel?.pubnubHeartbeatValue?:0, channel?.pubnubHeartbeatInterval?:0)
+        pnConf.authKey = channel?.pubnubToken
         pubnub = PubNub(pnConf)
         pubnub!!.addListener(object : SubscribeCallback() {
             override fun status(pubnub: PubNub, pnStatus: PNStatus) {
@@ -196,21 +200,22 @@ class VoiceService : Service() {
     }
 
     fun leaveChannel() {
-        engine!!.leaveChannel()
+        engine?.leaveChannel()
         LeaveChannel(channel!!.channel!!)
             .exec()
         stopSelf()
         uiHandler.removeCallbacks(pinger)
-        pubnub!!.unsubscribeAll()
-        pubnub!!.destroy()
+        pubnub?.unsubscribeAll()
+        pubnub?.destroy()
     }
 
     fun rejoinChannel() {
-        engine!!.leaveChannel()
-        LeaveChannel(channel!!.channel!!)
+        engine?.leaveChannel()
+        pubnub?.unsubscribeAll();
+        LeaveChannel(channel?.channel.orEmpty())
             .setCallback(object : Callback<BaseResponse?> {
                 override fun onSuccess(result: BaseResponse?) {
-                    JoinChannel(channel!!.channel!!)
+                    JoinChannel(channel?.channel.orEmpty())
                         .setCallback(object : Callback<Channel?> {
                             override fun onSuccess(result: Channel?) {
                                 updateChannel(result)
