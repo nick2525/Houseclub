@@ -78,9 +78,9 @@ class LoginFragment : BaseToolbarFragment() {
                     override fun onSuccess(result: BaseResponse?) {
                         sentCode = true
                         phoneInput?.isEnabled = false
-                        countryCodePicker?.isEnabled = false
+                        countryCodePicker?.isClickable = false
                         codeInput?.visibility = View.VISIBLE
-                        resendCodeLayout?.setVisibility(View.VISIBLE)
+                        resendCodeLayout?.visibility = View.VISIBLE
                     }
 
                     override fun onError(error: ErrorResponse?) {
