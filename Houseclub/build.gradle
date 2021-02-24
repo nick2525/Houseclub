@@ -9,8 +9,8 @@ android {
 		applicationId "me.grishka.houseclub"
 		minSdkVersion 24
 		targetSdkVersion 30
-		versionCode 5
-		versionName "1.0.4"
+		versionCode 7
+		versionName "1.0.6"
 	}
 	buildTypes {
 		release {
@@ -46,8 +46,11 @@ dependencies {
 
 	implementation 'io.agora.rtc:voice-sdk:3.3.0'
 	implementation group: 'com.pubnub', name: 'pubnub-gson', version: '4.33.3'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+	implementation('com.github.joielechong:countrycodepicker:2.4.2') {
+		exclude group: 'androidx.annotation'
+	}
+	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 repositories {
-    mavenCentral()
+	mavenCentral()
 }

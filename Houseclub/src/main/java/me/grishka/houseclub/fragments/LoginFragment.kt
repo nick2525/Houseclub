@@ -1,13 +1,16 @@
 package me.grishka.houseclub.fragments
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Toast
+import com.rilixtech.widget.countrycodepicker.CountryCodePicker
 import me.grishka.appkit.Nav
+import me.grishka.appkit.api.ErrorResponse
 import me.grishka.appkit.api.SimpleCallback
 import me.grishka.houseclub.R
 import me.grishka.houseclub.api.BaseResponse
@@ -21,11 +24,9 @@ class LoginFragment : BaseToolbarFragment() {
     private var codeInput: EditText? = null
     private var resendBtn: Button? = null
     private var nextBtn: Button? = null
+    private var countryCodePicker: CountryCodePicker? = null
+    private var resendCodeLayout: LinearLayout? = null
     private var sentCode = false
-    override fun onAttach(activity: Activity) {
-        super.onAttach(activity)
-        setTitle(R.string.login)
-    }
 
     override fun onCreateContentView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.login, container, false)
@@ -33,10 +34,14 @@ class LoginFragment : BaseToolbarFragment() {
         codeInput = view.findViewById(R.id.code_input)
         resendBtn = view.findViewById(R.id.resend_code)
         nextBtn = view.findViewById(R.id.next)
-        codeInput?.setVisibility(View.GONE)
-        resendBtn?.setVisibility(View.GONE)
-        nextBtn?.setOnClickListener(View.OnClickListener { v: View -> onNextClick(v) })
-        resendBtn?.setOnClickListener(View.OnClickListener { v: View -> onResendClick(v) })
+        countryCodePicker = view.findViewById(R.id.country_code_picker)
+        resendCodeLayout = view.findViewById(R.id.resend_code_layout)
+        codeInput?.visibility = View.GONE
+        resendBtn?.visibility = View.GONE
+        codeInput?.visibility = View.GONE;
+        resendCodeLayout?.visibility = View.GONE
+        nextBtn?.setOnClickListener{ onNextClick(it) }
+        resendBtn?.setOnClickListener{ onResendClick(it) }
         return view
     }
 
@@ -72,9 +77,14 @@ class LoginFragment : BaseToolbarFragment() {
                 .setCallback(object : SimpleCallback<BaseResponse?>(this) {
                     override fun onSuccess(result: BaseResponse?) {
                         sentCode = true
-                        phoneInput!!.isEnabled = false
-                        codeInput!!.visibility = View.VISIBLE
-                        resendBtn!!.visibility = View.VISIBLE
+                        phoneInput?.isEnabled = false
+                        countryCodePicker?.isEnabled = false
+                        codeInput?.visibility = View.VISIBLE
+                        resendCodeLayout?.setVisibility(View.VISIBLE)
+                    }
+
+                    override fun onError(error: ErrorResponse?) {
+                        Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                     }
                 })
                 .exec()
