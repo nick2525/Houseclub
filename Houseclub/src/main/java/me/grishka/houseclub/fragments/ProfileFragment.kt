@@ -35,6 +35,7 @@ import me.grishka.houseclub.api.methods.Follow
 import me.grishka.houseclub.api.methods.GetProfile
 import me.grishka.houseclub.api.methods.Unfollow
 import me.grishka.houseclub.api.methods.UpdateBio
+import me.grishka.houseclub.api.methods.UpdateName
 import me.grishka.houseclub.api.methods.UpdatePhoto
 import me.grishka.houseclub.api.model.FullUser
 import java.text.DateFormat
@@ -65,7 +66,11 @@ class ProfileFragment : LoaderFragment() {
         if (self) setHasOptionsMenu(true)
     }
 
-    override fun onCreateContentView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle?): View {
+    override fun onCreateContentView(
+        inflater: LayoutInflater,
+        container: ViewGroup,
+        savedInstanceState: Bundle?
+    ): View {
         val v = inflater.inflate(R.layout.profile, container, false)
         name = v.findViewById(R.id.name)
         username = v.findViewById(R.id.username)
@@ -80,15 +85,16 @@ class ProfileFragment : LoaderFragment() {
         twitter = v.findViewById(R.id.twitter)
         instagram = v.findViewById(R.id.instagram)
         socialButtons = v.findViewById(R.id.social)
-        followBtn?.setOnClickListener(View.OnClickListener { v: View -> onFollowClick(v) })
-        instagram?.setOnClickListener(View.OnClickListener { v: View -> onInstagramClick(v) })
-        twitter?.setOnClickListener(View.OnClickListener { v: View -> onTwitterClick(v) })
-        followers?.setOnClickListener(View.OnClickListener { v: View -> onFollowersClick(v) })
-        following?.setOnClickListener(View.OnClickListener { v: View -> onFollowingClick(v) })
-        v.findViewById<View>(R.id.inviter_btn).setOnClickListener { v: View -> onInviterClick(v) }
+        followBtn?.setOnClickListener { onFollowClick() }
+        instagram?.setOnClickListener { onInstagramClick() }
+        twitter?.setOnClickListener { onTwitterClick() }
+        followers?.setOnClickListener { onFollowersClick() }
+        following?.setOnClickListener { onFollowingClick() }
+        v.findViewById<View>(R.id.inviter_btn).setOnClickListener { onInviterClick(it) }
         if (self) {
-            bio?.setOnClickListener(View.OnClickListener { v: View -> onBioClick(v) })
-            photo?.setOnClickListener(this::onPhotoClick)
+            bio?.setOnClickListener { onBioClick() }
+            photo?.setOnClickListener { onPhotoClick() }
+            name?.setOnClickListener { onNameClick() }
         }
         return v
     }
@@ -100,7 +106,7 @@ class ProfileFragment : LoaderFragment() {
                     currentRequest = null
                     user = result?.userProfile
                     name?.text = user?.name
-                    username?.text = '@'.toString() + user?.username
+                    username?.text = "@${user?.username}"
                     val d = ColorDrawable(-0x7f7f80)
                     if (user?.photoUrl != null) ViewImageLoader.load(
                         photo,
@@ -199,7 +205,7 @@ class ProfileFragment : LoaderFragment() {
         }
     }
 
-    private fun onFollowClick(v: View) {
+    private fun onFollowClick() {
         if (user!!.isFollowed) {
             AlertDialog.Builder(activity)
                 .setMessage(getString(R.string.confirm_unfollow, user!!.name))
@@ -237,23 +243,23 @@ class ProfileFragment : LoaderFragment() {
         }
     }
 
-    private fun onInstagramClick(v: View) {
+    private fun onInstagramClick() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://instagram.com/" + user!!.instagram)))
     }
 
-    private fun onTwitterClick(v: View) {
+    private fun onTwitterClick() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/" + user!!.twitter)))
     }
 
-    private fun onFollowersClick(v: View) {
+    private fun onFollowersClick() {
         val args = Bundle()
-        args.putInt("id", user!!.userId)
+        args.putInt("id", user?.userId ?: 0)
         Nav.go(activity, FollowersFragment::class.java, args)
     }
 
-    private fun onFollowingClick(v: View) {
+    private fun onFollowingClick() {
         val args = Bundle()
-        args.putInt("id", user!!.userId)
+        args.putInt("id", user?.userId ?: 0)
         Nav.go(activity, FollowingFragment::class.java, args)
     }
 
@@ -264,14 +270,45 @@ class ProfileFragment : LoaderFragment() {
         Nav.go(activity, ProfileFragment::class.java, args)
     }
 
-    private fun onBioClick(v: View) {
+    private fun onNameClick() {
         val edit = EditText(activity)
         edit.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         edit.isSingleLine = false
         edit.minLines = 3
         edit.maxLines = 6
         edit.gravity = Gravity.TOP
-        edit.setText(user!!.bio)
+        edit.setText(user?.name)
+        AlertDialog.Builder(activity)
+            .setTitle(R.string.update_name)
+            .setView(edit)
+            .setPositiveButton(R.string.save) { dialog, which ->
+                val newName = edit.text.toString()
+                UpdateName(newName)
+                    .wrapProgress(activity)
+                    .setCallback(object : Callback<BaseResponse?> {
+                        override fun onSuccess(result: BaseResponse?) {
+                            user?.name = newName
+                            if (newName.isNotEmpty()) name?.setText(R.string.update_name) else name?.text = newName
+                        }
+
+                        override fun onError(error: ErrorResponse) {
+                            error.showToast(activity)
+                        }
+                    })
+                    .exec()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun onBioClick() {
+        val edit = EditText(activity)
+        edit.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        edit.isSingleLine = false
+        edit.minLines = 3
+        edit.maxLines = 6
+        edit.gravity = Gravity.TOP
+        edit.setText(user?.bio)
         AlertDialog.Builder(activity)
             .setTitle(R.string.update_bio)
             .setView(edit)
@@ -295,7 +332,7 @@ class ProfileFragment : LoaderFragment() {
             .show()
     }
 
-    private fun onPhotoClick(v: View) {
+    private fun onPhotoClick() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         startActivityForResult(intent, PICK_PHOTO_RESULT)
